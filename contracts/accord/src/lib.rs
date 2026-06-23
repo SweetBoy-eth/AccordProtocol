@@ -882,6 +882,22 @@ impl AccordContract {
 
     // ─── Read-Only Queries ───────────────────────────────────────────────────
 
+    /// Returns the addresses of owners who have currently approved `proposal_id`
+    /// (i.e. approved and not subsequently revoked). Errors if the contract is
+    /// not initialized or the proposal does not exist.
+    pub fn get_approvers(env: Env, proposal_id: u64) -> Result<Vec<Address>, ContractError> {
+        let owners = read_owners(&env)?;
+        read_proposal(&env, proposal_id)?;
+
+        let mut approvers = Vec::new(&env);
+        for owner in owners.iter() {
+            if read_approval(&env, proposal_id, &owner) {
+                approvers.push_back(owner);
+            }
+        }
+        Ok(approvers)
+    }
+
     /// Returns the contract version. Useful for frontends and upgrade scripts
     /// that need to know which version of the contract is deployed.
     pub fn get_version(_env: Env) -> u32 {

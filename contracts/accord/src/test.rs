@@ -595,6 +595,12 @@ fn execute_rejects_expired_even_if_approved() {
 // ─── Query ───────────────────────────────────────────────────────────────────
 
 #[test]
+fn get_version_returns_current_version() {
+    let (_, client, _, _, _, _, _) = setup(2);
+    assert_eq!(client.get_version(), 1);
+}
+
+#[test]
 fn is_owner_returns_correct_results() {
     let (_, client, owner_a, _, _, non_owner, _) = setup(2);
     assert!(client.is_owner(&owner_a));
@@ -681,6 +687,73 @@ fn create_proposal_rejects_deadline_at_now() {
             &NOW, // exactly the current timestamp
         ),
         Err(Ok(ContractError::InvalidDeadline))
+    );
+}
+
+#[test]
+fn get_approvers_returns_only_approved_addresses() {
+    let (env, client, owner_a, owner_b, owner_c, _, token_client) = setup(3);
+    let id = client.create_proposal(
+        &owner_a,
+        &Address::generate(&env),
+        &1_000_000_i128,
+        &token_client.address,
+        &str(&env, "Pay"),
+        &DEADLINE,
+    );
+    client.approve(&owner_a, &id);
+    client.approve(&owner_b, &id);
+
+    let approvers = client.get_approvers(&id);
+    assert_eq!(approvers.len(), 2);
+    assert!(approvers.contains(&owner_a));
+    assert!(approvers.contains(&owner_b));
+    assert!(!approvers.contains(&owner_c));
+}
+
+#[test]
+fn get_approvers_returns_empty_when_none_have_approved() {
+    let (env, client, owner_a, _, _, _, token_client) = setup(2);
+    let id = client.create_proposal(
+        &owner_a,
+        &Address::generate(&env),
+        &1_000_000_i128,
+        &token_client.address,
+        &str(&env, "Pay"),
+        &DEADLINE,
+    );
+
+    let approvers = client.get_approvers(&id);
+    assert_eq!(approvers.len(), 0);
+}
+
+#[test]
+fn get_approvers_excludes_revoked_approval() {
+    let (env, client, owner_a, owner_b, _, _, token_client) = setup(3);
+    let id = client.create_proposal(
+        &owner_a,
+        &Address::generate(&env),
+        &1_000_000_i128,
+        &token_client.address,
+        &str(&env, "Pay"),
+        &DEADLINE,
+    );
+    client.approve(&owner_a, &id);
+    client.approve(&owner_b, &id);
+    client.revoke(&owner_a, &id);
+
+    let approvers = client.get_approvers(&id);
+    assert_eq!(approvers.len(), 1);
+    assert!(!approvers.contains(&owner_a));
+    assert!(approvers.contains(&owner_b));
+}
+
+#[test]
+fn get_approvers_rejects_unknown_proposal() {
+    let (_, client, _, _, _, _, _) = setup(2);
+    assert_eq!(
+        client.try_get_approvers(&999),
+        Err(Ok(ContractError::ProposalNotFound))
     );
 }
 
@@ -907,10 +980,4 @@ fn active_count_stays_accurate_mixed() {
         client.try_create_proposal(&owner_a, &recipient, &1_000_000_i128, &token_client.address, &str(&env, "Overflow 2"), &long_deadline),
         Err(Ok(ContractError::TooManyActiveProposals))
     );
-}
-
-#[test]
-fn get_version_returns_current_version() {
-    let (_, client, _, _, _, _, _) = setup(2);
-    assert_eq!(client.get_version(), 1);
 }
