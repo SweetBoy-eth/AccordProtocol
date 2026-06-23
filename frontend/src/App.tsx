@@ -146,6 +146,25 @@ export default function App() {
             <ProposalCardSkeleton />
             <ProposalCardSkeleton />
           </div>
+        ) : page === "dashboard" ? (
+          <DashboardPage
+            activeProposals={activeProposals}
+            owners={owners}
+            dashboardStats={stats}
+            walletAddress={wallet.address}
+            onApprove={handleApprove}
+            onExecute={handleExecute}
+            onCreateProposal={() => setShowCreate(true)}
+          />
+        ) : page === "history" ? (
+          <HistoryPage
+            historyProposals={historyProposals}
+            onApprove={handleApprove}
+          />
+        ) : page === "settings" ? (
+          <SettingsPage stats={stats} />
+        ) : (
+          <NotFoundPage onGoHome={handleGoHome} />
         ) : (
           <SettingsPage stats={stats} />
           </>

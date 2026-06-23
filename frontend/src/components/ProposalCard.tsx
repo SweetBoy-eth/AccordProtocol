@@ -50,7 +50,7 @@ export function ProposalCard({
   }, [getCountdownText, proposal.status]);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors">
+    <div className={`${proposal.status === "ready" ? "bg-emerald-500/5 border-emerald-500/40 hover:border-emerald-500/60" : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"} rounded-xl p-4 transition-colors`}>
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs text-zinc-500 font-mono mb-1">
