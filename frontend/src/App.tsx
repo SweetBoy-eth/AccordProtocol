@@ -22,9 +22,7 @@ export default function App() {
     ["pending", "ready"].includes(p.status)
   );
 
-  const historyProposals = proposals.filter((p) =>
-    ["executed", "expired", "revoked"].includes(p.status)
-  );
+ 
 
   async function withTx(fn: () => Promise<void>) {
     if (!wallet.address) {
@@ -154,12 +152,10 @@ export default function App() {
             onCreateProposal={() => setShowCreate(true)}
           />
         ) : page === "history" ? (
-          <HistoryPage
-            historyProposals={historyProposals}
-            onApprove={handleApprove}
-          />
+          <HistoryPage proposals={proposals} onApprove={handleApprove} />
         ) : (
           <SettingsPage stats={stats} />
+          </>
         )}
       </main>
 
