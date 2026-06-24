@@ -20,6 +20,7 @@ export function ProposalCard({
   onRevoke,
 }: ProposalCardProps) {
   const connected = !!walletAddress;
+  const showApprove = proposal.status === "pending" && !proposal.userHasApproved;
 
   // Logic to copy the address to clipboard and show a temporary "copied/checked" icon
   const [copied, setCopied] = useState(false);
@@ -85,13 +86,13 @@ export function ProposalCard({
         <div className="flex items-center gap-2">
           <span className="text-xs text-zinc-600">{proposal.createdAt}</span>
 
-          {connected && !proposal.userHasApproved && proposal.status === "pending" && (
+          {showApprove && (
             <button
               type="button"
               onClick={() => onApprove(proposal.id)}
               className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg transition-colors font-medium disabled:opacity-50"
             >
-              Approve
+              {connected ? "Approve" : "Connect & Approve"}
             </button>
           )}
 
