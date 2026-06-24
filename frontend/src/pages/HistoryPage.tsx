@@ -27,6 +27,14 @@ export function HistoryPage({
   onApprove: (id: number) => void;
 }) {
   const [activeTab, setActiveTab] = useState<Filter>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const noop = () => {};
+
+  const filteredProposals = proposals
+    .filter((p) => activeTab === "all" || p.status === activeTab)
+    .filter((p) =>
+      p.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   const [displayedProposals, setDisplayedProposals] = useState<Proposal[]>(proposals);
   const [offset, setOffset] = useState<number>(proposals.length);
   const [totalCount, setTotalCount] = useState<number>(0);
@@ -107,10 +115,39 @@ export function HistoryPage({
           ))}
         </div>
       </div>
+
+      <div className="mb-4 relative">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by description…"
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2 text-white text-sm placeholder-zinc-600 focus:outline-none focus:border-zinc-700 transition-colors"
+        />
+        <div className="absolute left-3 top-2.5 text-zinc-600">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-4 h-4"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.602 10.602Z"
+            />
+          </svg>
+        </div>
+      </div>
+
       <div className="space-y-3">
         {filteredProposals.length === 0 ? (
           <p className="text-zinc-600 text-sm py-8 text-center">
-            No {activeTab === "all" ? "" : `${activeTab} `}proposals found
+            {searchTerm
+              ? "No proposals match your search"
+              : `No ${activeTab === "all" ? "" : `${activeTab} `}proposals found`}
           </p>
         ) : (
           filteredProposals.map((proposal) => (
