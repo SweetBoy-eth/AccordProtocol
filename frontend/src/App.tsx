@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Link, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { CreateProposalModal } from "./components/CreateProposalModal";
 import { useContract } from "./hooks/useContract";
 import { useEventPolling } from "./hooks/useEventPolling";
@@ -10,6 +16,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { OwnersPage } from "./pages/OwnersPage";
+import { ProposalDetailPage } from "./pages/ProposalDetailPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import type { Proposal } from "./types/accord";
 
@@ -34,6 +41,8 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { proposals, owners, ownerAddresses, stats, loading, error, refresh } =
+    useContract(wallet.address);
   const {
     proposals,
     owners,
@@ -49,13 +58,13 @@ export default function App() {
   useNotifications(wallet.address, proposals);
 
   const activeProposals = proposals.filter((proposal) =>
-    ["pending", "ready"].includes(proposal.status)
+    ["pending", "ready"].includes(proposal.status),
   );
   const isOwner = Boolean(
-    wallet.address && ownerAddresses.includes(wallet.address)
+    wallet.address && ownerAddresses.includes(wallet.address),
   );
   const showReadOnlyBanner = Boolean(
-    wallet.address && !loading && !error && !isOwner
+    wallet.address && !loading && !error && !isOwner,
   );
 
   async function withTx(
@@ -96,6 +105,8 @@ export default function App() {
     return withTx(() => approveProposal(wallet.address!, id), {
       id,
       patch: {
+        approvals: newApprovals,
+        status: newStatus,
         approvals,
         status,
         userHasApproved: true,
@@ -134,7 +145,7 @@ export default function App() {
   const thresholdStat = stats.find((stat) => stat.label === "Threshold");
   const threshold = Number.parseInt(
     thresholdStat?.value.split(" ")[0] ?? "0",
-    10
+    10,
   );
 
   function shortenAddr(addr: string) {
@@ -147,6 +158,7 @@ export default function App() {
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <Link
             to="/"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             className="flex items-center gap-3 transition-opacity hover:opacity-80"
           >
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500 text-xs font-bold text-black">
@@ -163,6 +175,7 @@ export default function App() {
               <Link
                 key={label}
                 to={to}
+                className={`rounded-lg px-3 py-1.5 text-sm capitalize transition-colors focus:ring-2 focus:ring-zinc-400 focus:outline-none ${
                 className={`rounded-lg px-3 py-1.5 text-sm capitalize transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400 ${
                   location.pathname === to ||
                   (to === "/app" && location.pathname === "/app/")
@@ -223,6 +236,10 @@ export default function App() {
         )}
 
         {wallet.networkMismatch && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 mb-6 text-sm text-amber-400">
+            Your wallet network does not match this app. Expected network:{" "}
+            {import.meta.env.VITE_NETWORK_PASSPHRASE}. Switch Freighter network
+            to continue.
           <div className="mb-6 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
             Your wallet network does not match this app. Expected network:{" "}
             {import.meta.env.VITE_NETWORK_PASSPHRASE}. Switch Freighter network to
@@ -261,7 +278,9 @@ export default function App() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-semibold">Freighter wallet required</h1>
+            <h1 className="text-2xl font-semibold">
+              Freighter wallet required
+            </h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-zinc-400">
               Freighter is the supported browser extension for signing Stellar
               transactions in Accord. Install it to connect a wallet and use the
@@ -276,6 +295,36 @@ export default function App() {
               Install Freighter
             </a>
           </div>
+        ) : loading ? (
+          <div className="py-16 text-center text-sm text-zinc-500">
+            Loading contract data…
+          </div>
+        ) : page === "dashboard" ? (
+          <DashboardPage
+            activeProposals={activeProposals}
+            owners={owners}
+            dashboardStats={stats}
+            walletAddress={wallet.address}
+            onApprove={handleApprove}
+            onExecute={handleExecute}
+            onRevoke={handleRevoke}
+            onCreateProposal={() => setShowCreate(true)}
+            error={null}
+            loading={loading}
+          />
+        ) : page === "history" ? (
+          <HistoryPage proposals={proposals} onApprove={handleApprove} />
+        ) : page === "owners" ? (
+          <OwnersPage
+            owners={owners}
+            threshold={parseInt(
+              stats.find((s) => s.label === "Threshold")?.value.split(" ")[0] ||
+                "0",
+            )}
+            totalOwners={owners.length}
+          />
+        ) : page === "settings" ? (
+          <SettingsPage stats={stats} />
         ) : (
           <Routes>
             <Route
@@ -312,6 +361,7 @@ export default function App() {
               }
             />
             <Route path="settings" element={<SettingsPage stats={stats} />} />
+            <Route path="proposals/:id" element={<ProposalDetailPage />} />
             <Route
               path="*"
               element={<NotFoundPage onGoHome={() => navigate("/app")} />}
