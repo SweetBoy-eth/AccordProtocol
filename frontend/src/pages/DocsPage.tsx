@@ -282,13 +282,14 @@ export function DocsPage() {
               Governance
             </p>
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Approving and Executing
+              Approving &amp; Executing
             </h2>
             <p className="mt-4 text-sm leading-7 text-zinc-400 sm:text-base">
-              Once a proposal is created, the multisig approval process determines
-              whether it is ready for execution. This section explains who can
-              approve, how the threshold works, and what happens when a proposal
-              is executed.
+              Once a proposal exists on-chain, the multisig owners review it and
+              decide whether to approve. When enough owners approve, the proposal
+              becomes executable. This section explains who can take these actions,
+              how the threshold mechanism works, and what happens during and after
+              execution.
             </p>
 
             <div className="mt-8 space-y-8">
@@ -297,13 +298,12 @@ export function DocsPage() {
                   Who Can Approve
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-zinc-400 sm:text-base">
-                  Only addresses in the multisig owners list can approve, revoke,
-                  or execute proposals. If you connect a wallet that is not an
-                  owner, you will see the dashboard in read-only mode: you can
-                  browse proposals and check their status, but you cannot sign any
-                  governance actions. This is enforced on-chain — the contract
-                  verifies owner status before processing any approve, revoke, or
-                  execute call.
+                  Only addresses that are part of the multisig owners list can
+                  approve, revoke, or execute proposals. The contract checks the
+                  caller's authorization against the stored owners on every
+                  action. If your address is not in the owners list, the dashboard
+                  displays a read-only view of the proposals — you can observe
+                  the multisig activity but cannot sign or submit transactions.
                 </p>
               </div>
 
@@ -312,10 +312,19 @@ export function DocsPage() {
                   How the Threshold Works
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-zinc-400 sm:text-base">
-                  Every proposal starts in <strong className="text-white">Pending</strong> status. Each owner may add one approval per proposal. The moment the approval count reaches the configured threshold (for example, 2 out of 3 owners), the proposal automatically transitions to <strong className="text-white">Ready</strong>. No manual action is needed — the contract handles the status change on-chain when the threshold is crossed.
+                  Each owner may add exactly one approval per proposal. The
+                  approval count is stored on-chain and compared against the
+                  configured threshold — for example, a 2-of-3 multisig requires
+                  two approvals before a proposal is ready. The moment the
+                  approval count reaches the threshold, the proposal status
+                  automatically transitions from Pending to Ready.
                 </p>
                 <p className="mt-3 text-sm leading-7 text-zinc-400 sm:text-base">
-                  Owners can also revoke an approval. If revoking drops the count below the threshold, the proposal transitions back to Pending. This means approvals are not final until execution — owners can change their mind as long as the proposal has not been executed yet.
+                  If an owner revokes their approval after the threshold has been
+                  reached and the count drops back below the threshold, the
+                  proposal status returns to Pending. This means the multisig can
+                  reconsider a proposal before execution as long as no owner has
+                  already executed it.
                 </p>
               </div>
 
@@ -324,10 +333,18 @@ export function DocsPage() {
                   Executing a Proposal
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-zinc-400 sm:text-base">
-                  Once a proposal reaches Ready status, any owner can press Execute. The contract then transfers tokens directly from the multisig account to the recipient specified in the proposal. For governance proposals (such as adding or removing an owner, or changing the threshold), the corresponding state change is applied on-chain instead of a token transfer.
+                  Any multisig owner can press Execute once a proposal has reached
+                  the Ready state. When executed, the contract transfers tokens
+                  directly from the multisig account to the recipient address
+                  specified in the proposal. For governance proposals — such as
+                  adding or removing an owner, or changing the threshold — the
+                  corresponding state change is applied instead of a token
+                  transfer.
                 </p>
                 <p className="mt-3 text-sm leading-7 text-zinc-400 sm:text-base">
-                  Execution is blocked if the proposal deadline has already passed — in that case the proposal is considered Expired and can no longer be executed. The contract also enforces any configured time-lock delay, meaning execution is not possible until a waiting period after the threshold is first met has elapsed.
+                  Execution is blocked if the proposal deadline has already passed.
+                  Expired proposals cannot be executed; they must be replaced with
+                  a new proposal if the action is still needed.
                 </p>
               </div>
 
@@ -336,7 +353,11 @@ export function DocsPage() {
                   After Execution
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-zinc-400 sm:text-base">
-                  When a proposal is successfully executed, its status moves to <strong className="text-white">Executed</strong>. The proposal is removed from the active proposals count and will no longer appear in the main dashboard view. You can find executed proposals in the history section of the app, where the full lifecycle — including who proposed, who approved, and when it was executed — remains visible for audit purposes.
+                  Once execution succeeds, the proposal moves to Executed status
+                  and is removed from the active list on the dashboard. You can
+                  find executed proposals in the history view, where the full
+                  lifecycle — who proposed it, who approved, and when it was
+                  executed — remains visible for audit purposes.
                 </p>
               </div>
             </div>
